@@ -58,6 +58,16 @@ class Products with ChangeNotifier {
     return _items.firstWhere((prod) => prod.id == id);
   }
 
+  Future<void> fetchAndsetProducts() async {
+    const url = 'https://shop-app-flutter-98bb1.firebaseio.com/products.json';
+    try {
+      final response = await http.get(url);
+      print(json.decode(response.body));
+    } catch (error) {
+      throw (error);
+    }
+  }
+
   Future<void> addProduct(Product product) async {
     const url = 'https://shop-app-flutter-98bb1.firebaseio.com/products.json';
     try {
@@ -71,15 +81,15 @@ class Products with ChangeNotifier {
           'isFavorite': product.isFavorite,
         }),
       );
-          final newProduct = Product(
-      title: product.title,
-      description: product.description,
-      price: product.price,
-      imageUrl: product.imageUrl,
-      id: json.decode(response.body)['name'],
-    );
-    _items.add(newProduct);
-    notifyListeners();
+      final newProduct = Product(
+        title: product.title,
+        description: product.description,
+        price: product.price,
+        imageUrl: product.imageUrl,
+        id: json.decode(response.body)['name'],
+      );
+      _items.add(newProduct);
+      notifyListeners();
     } catch (error) {
       print(error);
       throw error;
