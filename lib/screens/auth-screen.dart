@@ -106,7 +106,8 @@ class _AuthCardState extends State<AuthCard>
   final _passwordController = TextEditingController();
 
   AnimationController _controller;
-  Animation<Size> _heightAnimation;
+  Animation<Offset> _slideAnimation;
+  Animation<double> _opacityAnimation;
 
   @override
   void initState() {
@@ -117,12 +118,17 @@ class _AuthCardState extends State<AuthCard>
         milliseconds: 300,
       ),
     );
-    _heightAnimation = Tween<Size>(
-            begin: Size(double.infinity, 260), end: Size(double.infinity, 320))
-        .animate(
+    _slideAnimation =
+        Tween<Offset>(begin: Offset(0, -1.5), end: Offset(0, 0)).animate(
       CurvedAnimation(
         parent: _controller,
         curve: Curves.fastOutSlowIn,
+      ),
+    );
+    _opacityAnimation = Tween(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeIn,
       ),
     );
     // _heightAnimation.addListener(() => setState(() {
@@ -228,28 +234,31 @@ class _AuthCardState extends State<AuthCard>
       child: AnimatedContainer(
         duration: Duration(milliseconds: 300),
         curve: Curves.easeIn,
-            height: _authMode == AuthMode.Signup ? 320 : 260,
-            // height: _heightAnimation.value.height,
-            constraints: BoxConstraints(
-                minHeight: _authMode == AuthMode.Signup ? 320 : 260),
-            width: deviceSize.width * 0.75,
-            padding: EdgeInsets.all(16.0),
-            child: Form(
+        height: _authMode == AuthMode.Signup ? 320 : 260,
+        // height: _heightAnimation.value.height,
+        constraints:
+            BoxConstraints(minHeight: _authMode == AuthMode.Signup ? 320 : 260),
+        width: deviceSize.width * 0.75,
+        padding: EdgeInsets.all(16.0),
+        child: Form(
           key: _formKey,
           child: SingleChildScrollView(
             child: Column(
               children: <Widget>[
-                TextFormField(
-                  decoration: InputDecoration(labelText: 'E-Mail'),
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value.isEmpty || !value.contains('@')) {
-                      return 'Invalid email!';
-                    }
-                  },
-                  onSaved: (value) {
-                    _authData['email'] = value;
-                  },
+                SlideTransition(
+                  position: _slideAnimation,
+                  child: TextFormField(
+                    decoration: InputDecoration(labelText: 'E-Mail'),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                      if (value.isEmpty || !value.contains('@')) {
+                        return 'Invalid email!';
+                      }
+                    },
+                    onSaved: (value) {
+                      _authData['email'] = value;
+                    },
+                  ),
                 ),
                 TextFormField(
                   decoration: InputDecoration(labelText: 'Password'),
@@ -264,19 +273,29 @@ class _AuthCardState extends State<AuthCard>
                     _authData['password'] = value;
                   },
                 ),
-                if (_authMode == AuthMode.Signup)
-                  TextFormField(
-                    enabled: _authMode == AuthMode.Signup,
-                    decoration: InputDecoration(labelText: 'Confirm Password'),
-                    obscureText: true,
-                    validator: _authMode == AuthMode.Signup
-                        ? (value) {
-                            if (value != _passwordController.text) {
-                              return 'Passwords do not match!';
+                AnimatedContainer(
+                  constraints: BoxConstraints(
+                      minHeight: _authMode == AuthMode.Signup ? 60 : 0,
+                      maxHeight: _authMode == AuthMode.Signup ? 120 : 0),
+                  duration: Duration(milliseconds: 300),
+                  curve: Curves.easeIn,
+                  child: FadeTransition(
+                    opacity: _opacityAnimation,
+                    child: TextFormField(
+                      enabled: _authMode == AuthMode.Signup,
+                      decoration:
+                          InputDecoration(labelText: 'Confirm Password'),
+                      obscureText: true,
+                      validator: _authMode == AuthMode.Signup
+                          ? (value) {
+                              if (value != _passwordController.text) {
+                                return 'Passwords do not match!';
+                              }
                             }
-                          }
-                        : null,
+                          : null,
+                    ),
                   ),
+                ),
                 SizedBox(
                   height: 20,
                 ),
